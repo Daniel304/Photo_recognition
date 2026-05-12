@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, ForeignKey, LargeBinary, Index, Text, Boolean
+    Column, Integer, String, Float, DateTime, ForeignKey, LargeBinary, Index, Text, Boolean,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -22,7 +23,18 @@ class Photo(Base):
     error = Column(Text)
     missing = Column(Boolean, default=False, index=True)
 
+    # User curation
+    favorite = Column(Boolean, default=False, index=True)
+    rating = Column(Integer, default=0, index=True)  # 0..5
+
+    # Auto-extracted
+    phash = Column(String(16), index=True)  # 64-bit perceptual hash, hex
+    gps_lat = Column(Float)
+    gps_lon = Column(Float)
+
     faces = relationship("Face", back_populates="photo", cascade="all, delete-orphan")
+    album_links = relationship("PhotoAlbum", back_populates="photo", cascade="all, delete-orphan")
+    event_links = relationship("PhotoEvent", back_populates="photo", cascade="all, delete-orphan")
 
 
 class Person(Base):
@@ -83,6 +95,64 @@ class Suggestion(Base):
     __table_args__ = (
         Index("ix_suggestions_face_person", "face_id", "person_id", unique=True),
     )
+
+
+class Album(Base):
+    """User-curated collection: kind='album' for named albums (Vacation 2024),
+    kind='tag' for free-form labels (kids, birthday). Same storage either way."""
+    __tablename__ = "albums"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    kind = Column(String(16), default="album", index=True)  # album|tag
+    color = Column(String(16))
+    cover_photo_id = Column(Integer, ForeignKey("photos.id", ondelete="SET NULL"), nullable=True)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    photo_links = relationship("PhotoAlbum", back_populates="album", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        UniqueConstraint("kind", "name", name="uq_album_kind_name"),
+    )
+
+
+class PhotoAlbum(Base):
+    __tablename__ = "photo_albums"
+
+    photo_id = Column(Integer, ForeignKey("photos.id", ondelete="CASCADE"), primary_key=True)
+    album_id = Column(Integer, ForeignKey("albums.id", ondelete="CASCADE"), primary_key=True)
+    added_at = Column(DateTime, default=datetime.utcnow)
+
+    photo = relationship("Photo", back_populates="album_links")
+    album = relationship("Album", back_populates="photo_links")
+
+
+class Event(Base):
+    """Auto-clustered group of photos taken close in time (and place, if GPS)."""
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    start_at = Column(DateTime, index=True)
+    end_at = Column(DateTime, index=True)
+    gps_lat = Column(Float)
+    gps_lon = Column(Float)
+    cover_photo_id = Column(Integer, ForeignKey("photos.id", ondelete="SET NULL"))
+    user_renamed = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    photo_links = relationship("PhotoEvent", back_populates="event", cascade="all, delete-orphan")
+
+
+class PhotoEvent(Base):
+    __tablename__ = "photo_events"
+
+    photo_id = Column(Integer, ForeignKey("photos.id", ondelete="CASCADE"), primary_key=True)
+    event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), primary_key=True)
+
+    photo = relationship("Photo", back_populates="event_links")
+    event = relationship("Event", back_populates="photo_links")
 
 
 class ScanState(Base):

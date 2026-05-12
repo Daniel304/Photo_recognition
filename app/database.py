@@ -51,3 +51,27 @@ def session_scope():
 def init_db():
     from . import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    _migrate_schema()
+
+
+def _migrate_schema():
+    """Idempotently add columns to existing tables (SQLite-friendly)."""
+    needed = {
+        "photos": [
+            ("favorite", "INTEGER DEFAULT 0"),
+            ("rating", "INTEGER DEFAULT 0"),
+            ("phash", "VARCHAR(16)"),
+            ("gps_lat", "REAL"),
+            ("gps_lon", "REAL"),
+        ],
+    }
+    with engine.begin() as conn:
+        for table, cols in needed.items():
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            for name, ddl in cols:
+                if name not in existing:
+                    conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+        # Helpful indexes for new columns
+        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_photos_phash ON photos(phash)")
+        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_photos_favorite ON photos(favorite)")
+        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_photos_rating ON photos(rating)")

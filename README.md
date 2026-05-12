@@ -18,8 +18,16 @@ database to a separate `data/` volume.
 - Picasa-style People view, manual naming, rename, merge, delete.
 - Find similar faces and DBSCAN clustering of unknown faces so you can name a
   whole group at once.
-- Library browser with EXIF date sorting and filename search.
-- Periodic re-scan picks up new files and removes deleted ones.
+- **Albums and Tags** (many-to-many) — put one photo in "Vacation 2024" *and*
+  "kids" *and* "favorites" all at once. Cover photo auto-set.
+- **Favorites and 0–5 star ratings** with library filters.
+- **GPS extraction** from EXIF, with a per-event OpenStreetMap (Leaflet) map.
+- **Auto-detected events** — date+place clustering (Picasa-style "trip
+  detected"). Renames are sticky across rebuilds.
+- **Near-duplicate detection** via 64-bit perceptual hash. Surfaces the
+  highest-resolution candidate per group; files are never deleted server-side.
+- Library browser with EXIF date sorting, filename search, favorite & rating filters.
+- Periodic re-scan picks up new files and marks deleted ones as missing.
 
 ## Is face recognition "sensible/needed" here?
 
@@ -72,15 +80,22 @@ the top-right for progress.
 ## Using the app
 
 - **Library**: browse all indexed photos. Click a photo to open it with face
-  boxes overlayed. Click a face box to name it.
+  boxes overlaid. Click a face box to name it. In the lightbox you can
+  favorite, star-rate (`F`, `0`–`5`), and add the photo to any albums/tags.
 - **People**: see everyone you've named, drill in to see all their photos,
   rename, merge with another person, or trigger "find more faces" to search
   unassigned faces for matches.
+- **Albums**: top section lists named albums (Vacation 2024, etc.). Bottom
+  section lists tags (`#kids`, `#christmas`). A photo can be in any number
+  of either.
+- **Events**: auto-clustered trips/days. Click "Rebuild events" to recompute
+  from EXIF date+GPS. Renames are remembered across rebuilds. Events with
+  GPS show a Leaflet map of where each photo was taken.
 - **Review**: the swipe queue. The AI shows you a face and asks
   "Is this <Name>?" — swipe right (or `→`) to accept, left (or `←`) to reject,
   space to skip. Use it after you've named ~5–10 faces for a person.
-- **Search**: filename/folder search, plus "Cluster unassigned faces" which
-  groups unknown faces with DBSCAN so you can name a whole cluster at once.
+- **Search**: filename/folder search, "Cluster unassigned faces" to group
+  unknown faces with DBSCAN, and "Find near-duplicates" via perceptual hash.
 - **Admin**: stats and manual scan controls.
 
 ## Architecture

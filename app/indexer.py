@@ -15,9 +15,11 @@ from .config import settings
 from .database import session_scope
 from .face_engine import FaceEngine, emb_to_bytes
 from .image_utils import (
+    compute_phash,
     face_rel_path,
     load_pil,
     parse_exif_datetime,
+    parse_exif_gps,
     pil_to_bgr,
     save_face_crop,
     save_thumbnail,
@@ -86,6 +88,13 @@ def _process_photo(db: Session, path: Path, engine: FaceEngine, person_index) ->
     photo.width = pil.width
     photo.height = pil.height
     photo.taken_at = parse_exif_datetime(pil)
+    lat, lon = parse_exif_gps(pil)
+    photo.gps_lat = lat
+    photo.gps_lon = lon
+    try:
+        photo.phash = compute_phash(pil)
+    except Exception as e:
+        log.warning("phash failed for %s: %s", path, e)
     photo.indexed_at = datetime.utcnow()
     db.flush()  # get photo.id
 

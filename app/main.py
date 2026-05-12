@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import admin, faces, people, photos, review, search
+from .api import admin, albums, duplicates, events, faces, people, photos, review, search
 from .config import settings
 from .database import init_db
 from .indexer import Indexer
@@ -41,6 +41,9 @@ app.include_router(faces.router)
 app.include_router(people.router)
 app.include_router(review.router)
 app.include_router(search.router)
+app.include_router(albums.router)
+app.include_router(events.router)
+app.include_router(duplicates.router)
 
 
 WEB_DIR = Path(__file__).parent / "web"

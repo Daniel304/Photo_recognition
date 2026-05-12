@@ -13,3 +13,4 @@ insightface==0.7.3
 scikit-learn==1.5.2
 aiofiles==24.1.0
 piexif==1.1.3
+ImageHash==4.3.1
