@@ -1,0 +1,30 @@
+services:
+  photo-recognition:
+    build: .
+    image: photo-recognition:latest
+    container_name: photo-recognition
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Path inside the container that the indexer will scan recursively.
+      PHOTO_ROOT: /photos
+      # Directory for the SQLite DB, thumbnails, face crops, and AI models.
+      DATA_DIR: /data
+      # Threshold for AUTO-assigning a face to a known person (0..1, cosine sim).
+      AUTO_MATCH_THRESHOLD: "0.62"
+      # Threshold below which faces are queued as "swipe" suggestions.
+      SUGGEST_THRESHOLD: "0.45"
+      # Comma-separated list of extensions to index.
+      ALLOWED_EXTENSIONS: ".jpg,.jpeg,.png,.heic,.heif,.webp,.bmp,.tif,.tiff"
+      # How often the background scanner re-walks PHOTO_ROOT (seconds, 0 = manual only).
+      SCAN_INTERVAL: "3600"
+      # InsightFace model pack. "buffalo_sc" is the small CPU-friendly model.
+      FACE_MODEL: "buffalo_sc"
+      # Set to a value to require this in the X-API-Key header (optional).
+      API_KEY: ""
+    volumes:
+      # Mount your Synology photo share READ-ONLY here. Replace the host path.
+      - /volume1/photo:/photos:ro
+      # Persistent state: SQLite DB, thumbnails, face crops, downloaded models.
+      - ./data:/data

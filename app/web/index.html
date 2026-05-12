@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Photo Recognition</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Photo&nbsp;Recognition</div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="library">Library</button>
+    <button class="tab" data-tab="people">People</button>
+    <button class="tab" data-tab="review">Review <span id="review-badge" class="badge"></span></button>
+    <button class="tab" data-tab="search">Search</button>
+    <button class="tab" data-tab="admin">Admin</button>
+  </nav>
+  <div class="status" id="status-pill" title="Indexer status">idle</div>
+</header>
+
+<main id="app">
+  <!-- Library -->
+  <section class="view" id="view-library">
+    <div class="toolbar">
+      <input type="search" id="lib-search" placeholder="Filter by path...">
+      <select id="lib-order">
+        <option value="taken_desc">Newest taken</option>
+        <option value="taken_asc">Oldest taken</option>
+        <option value="indexed_desc">Recently indexed</option>
+      </select>
+      <span class="muted" id="lib-count"></span>
+    </div>
+    <div id="lib-grid" class="grid"></div>
+    <div class="pager">
+      <button id="lib-prev">Prev</button>
+      <span id="lib-page"></span>
+      <button id="lib-next">Next</button>
+    </div>
+  </section>
+
+  <!-- People -->
+  <section class="view hidden" id="view-people">
+    <div class="toolbar">
+      <input id="new-person-name" placeholder="New person name">
+      <button id="new-person-btn">Create</button>
+      <span class="muted" id="people-count"></span>
+    </div>
+    <div id="people-grid" class="people-grid"></div>
+    <div id="person-detail" class="hidden">
+      <div class="person-header">
+        <button class="link" id="back-to-people">&larr; All people</button>
+        <h2 id="person-name"></h2>
+        <button id="person-rename">Rename</button>
+        <button id="person-rescan">Find more faces</button>
+        <button id="person-delete" class="danger">Delete</button>
+      </div>
+      <h3>Confirmed faces</h3>
+      <div id="person-faces" class="face-grid"></div>
+      <h3>Photos featuring this person</h3>
+      <div id="person-photos" class="grid"></div>
+    </div>
+  </section>
+
+  <!-- Review -->
+  <section class="view hidden" id="view-review">
+    <div class="toolbar">
+      <span class="muted">Tap <span class="kbd">&larr;</span> reject, <span class="kbd">&rarr;</span> accept, <span class="kbd">space</span> skip. Or drag the card.</span>
+      <span id="review-remaining" class="muted"></span>
+    </div>
+    <div class="swipe-stage" id="swipe-stage">
+      <div id="swipe-empty" class="empty hidden">
+        Nothing to review right now. Add a name to an unassigned face on the Library or People tab to get started.
+      </div>
+    </div>
+    <div class="swipe-actions">
+      <button class="big reject" id="swipe-reject" title="Not this person (Left)">&#10007;</button>
+      <button class="big skip" id="swipe-skip" title="Skip (Space)">&#8634;</button>
+      <button class="big accept" id="swipe-accept" title="Yes, same person (Right)">&#10003;</button>
+    </div>
+  </section>
+
+  <!-- Search -->
+  <section class="view hidden" id="view-search">
+    <div class="toolbar">
+      <input id="search-q" placeholder="Search photo filenames / folders...">
+      <button id="search-go">Search</button>
+    </div>
+    <div id="search-results" class="grid"></div>
+    <h3>Cluster unassigned faces</h3>
+    <p class="muted">Group similar-looking unknown faces so you can name a whole cluster at once.</p>
+    <button id="cluster-btn">Run clustering</button>
+    <div id="clusters"></div>
+  </section>
+
+  <!-- Admin -->
+  <section class="view hidden" id="view-admin">
+    <div class="admin-stats" id="admin-stats"></div>
+    <div class="toolbar">
+      <button id="scan-btn">Start scan</button>
+      <button id="scan-cancel-btn">Cancel scan</button>
+    </div>
+    <p class="muted">
+      Photos are indexed from <code id="admin-root"></code>. Originals are never modified or moved.
+      Thumbnails, face crops and the SQLite DB live in the mounted <code>/data</code> volume.
+    </p>
+  </section>
+</main>
+
+<!-- Photo lightbox -->
+<div class="lightbox hidden" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">&times;</button>
+  <div class="lightbox-inner">
+    <div class="lightbox-image-wrap">
+      <img id="lightbox-img" alt="">
+      <div id="lightbox-boxes" class="boxes"></div>
+    </div>
+    <aside class="lightbox-side">
+      <h3 id="lightbox-title"></h3>
+      <div id="lightbox-meta" class="muted"></div>
+      <h4>Faces in this photo</h4>
+      <div id="lightbox-faces" class="face-grid"></div>
+    </aside>
+  </div>
+</div>
+
+<!-- Assign-name modal -->
+<div class="modal hidden" id="assign-modal">
+  <div class="modal-inner">
+    <h3>Assign face to person</h3>
+    <img id="assign-face-img" class="face-big">
+    <div class="muted">Pick an existing person or type a new name.</div>
+    <div id="assign-people-list" class="assign-people"></div>
+    <div class="row">
+      <input id="assign-new-name" placeholder="Or new name...">
+      <button id="assign-confirm">Save</button>
+      <button id="assign-cancel" class="link">Cancel</button>
+    </div>
+    <hr>
+    <button id="assign-hide" class="danger">This isn't a face / hide</button>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
